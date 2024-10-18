@@ -1,30 +1,29 @@
-# Load necessary libraries
+# Install necessary libraries (only runs if the package is not already installed)
+if(!require(dplyr)) install.packages("dplyr", dependencies=TRUE)
+if(!require(ggplot2)) install.packages("ggplot2", dependencies=TRUE)
+if(!require(readxl)) install.packages("readxl", dependencies=TRUE)
+
+# Load the libraries
 library(dplyr)
 library(ggplot2)
+library(readxl)
 
-# Load the dataset (replace 'NutrientRecycling_Dataset.xlsx' with your file path)
-data <- read.csv("NutrientRecycling_Dataset.csv")  # For CSV files
-# For Excel: data <- readxl::read_excel("NutrientRecycling_Dataset.xlsx")
+# Load the dataset from the specified file path
+data <- read_excel("C:\\Users\\posetgar\\Downloads\\NutrientRecycling_Dataset.xlsx")
 
-# Inspect the first few rows of the dataset
-head(data)
-
-# Calculate percentage reduction in heavy metals (Cd and Zn) after treatment
+# 1. Calculate percentage reduction in heavy metals (Cd and Zn)
+# and percentage retention of nutrients (P, N, K)
+# Note: Make sure the column names match the dataset exactly, including special characters and spaces
 data <- data %>%
   mutate(
     Cd_Reduction = ((Cd_Before_mg_kg - Cd_After_mg_kg) / Cd_Before_mg_kg) * 100,
-    Zn_Reduction = ((Zn_Before_mg_kg - Zn_After_mg_kg) / Zn_Before_mg_kg) * 100
+    Zn_Reduction = ((Zn_Before_mg_kg - Zn_After_mg_kg) / Zn_Before_mg_kg) * 100,
+    P_Retention = (`P_After_%` / `P_Before_%`) * 100,
+    N_Retention = (`N_After_%` / `N_Before_%`) * 100,
+    K_Retention = (`K_After_%` / `K_Before_%`) * 100
   )
 
-# Calculate nutrient retention after treatment
-data <- data %>%
-  mutate(
-    P_Retention = (P_After_% / P_Before_%) * 100,
-    N_Retention = (N_After_% / N_Before_%) * 100,
-    K_Retention = (K_After_% / K_Before_%) * 100
-  )
-
-# Summary statistics for heavy metal reduction and nutrient retention by treatment
+# 2. Summarize the data by treatment
 summary_data <- data %>%
   group_by(Treatment) %>%
   summarise(
@@ -38,7 +37,7 @@ summary_data <- data %>%
 # Print the summary table
 print(summary_data)
 
-# Plot heavy metal reduction by treatment
+# 3. Plotting: Boxplot of heavy metal reduction by treatment
 ggplot(data, aes(x = Treatment, y = Cd_Reduction, fill = Treatment)) +
   geom_boxplot() +
   ggtitle("Reduction in Cadmium (Cd) by Treatment") +
@@ -51,7 +50,7 @@ ggplot(data, aes(x = Treatment, y = Zn_Reduction, fill = Treatment)) +
   ylab("Zn Reduction (%)") +
   theme_minimal()
 
-# Plot nutrient retention by treatment
+# 4. Plotting: Boxplot of nutrient retention by treatment
 ggplot(data, aes(x = Treatment, y = P_Retention, fill = Treatment)) +
   geom_boxplot() +
   ggtitle("Phosphorus Retention by Treatment") +
@@ -70,7 +69,7 @@ ggplot(data, aes(x = Treatment, y = K_Retention, fill = Treatment)) +
   ylab("K Retention (%)") +
   theme_minimal()
 
-# Find the best treatment for heavy metal reduction and nutrient retention
+# 5. Identify the best treatment based on criteria for Cd, Zn reduction, and nutrient retention
 best_treatment <- summary_data %>%
   filter(Avg_Cd_Reduction > 50 & Avg_Zn_Reduction > 50 & Avg_P_Retention > 70)
 
